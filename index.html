@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Larpers — Moderator (Mobile)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="top-fixed">
+    <header class="app-header">
+      <div>
+        <h1>THE LARPERS</h1>
+        <span class="subtitle">Moderator · Mobile</span>
+      </div>
+      <button id="resetBtn" class="icon-btn">⟲</button>
+    </header>
+    <div class="status-strip" id="statusStrip"></div>
+  </div>
+
+  <main>
+    <section id="tab-fighters" class="tab-panel active">
+      <div class="cards-list" id="cardsRow"></div>
+    </section>
+
+    <section id="tab-combat" class="tab-panel">
+      <div class="combat-grid">
+        <div class="combat-block">
+          <p class="section-title">⚔ Attacker</p>
+          <select id="attackerSelect" class="std-select"></select>
+          <div class="skill-buttons" id="attackerSkills"></div>
+        </div>
+        <div class="combat-block">
+          <p class="section-title">🛡 Defender</p>
+          <select id="defenderSelect" class="std-select"></select>
+          <div class="field-label">Countered?</div>
+          <select id="counterSelect" class="std-select">
+            <option value="none">None</option>
+            <option value="dodge">Dodge (-50%)</option>
+            <option value="counter">Counter</option>
+          </select>
+          <div class="counter-info" id="counterInfo"></div>
+        </div>
+      </div>
+      <button id="executeBtn" class="btn btn-execute">EXECUTE TURN</button>
+    </section>
+
+    <section id="tab-moderator" class="tab-panel">
+      <p class="section-title">⚠ Moderator Actions</p>
+      <div class="field-label">Target</div>
+      <select id="violationTarget" class="std-select"></select>
+      <div class="field-label">Violation</div>
+      <select id="violationType" class="std-select">
+        <option value="execution-fail">Execution Fail (-40 HP)</option>
+        <option value="tongue-twister">Tongue Twister (-20 HP + MP)</option>
+        <option value="ooc">Out-of-Character (-25 HP)</option>
+        <option value="stutter">Stutter / Hesitation (Downgrade)</option>
+        <option value="safety-breach">Safety Breach (Forfeit)</option>
+      </select>
+      <div id="tongueTwisterSkillWrap" style="display:none;">
+        <div class="field-label">Attempted Skill</div>
+        <select id="tongueTwisterSkill" class="std-select"></select>
+      </div>
+      <div class="violation-hint" id="violationHint"></div>
+      <button id="applyViolationBtn" class="btn btn-danger">Apply Penalty</button>
+    </section>
+
+    <section id="tab-arena" class="tab-panel">
+      <p class="section-title">Arena Modifiers</p>
+      <label class="switch-row">
+        <span>Round 1: +10 DMG (all attacks)</span>
+        <input type="checkbox" id="round1Toggle">
+      </label>
+      <button id="round2HealBtn" class="btn">Round 2: Heal All Players +10 HP</button>
+      <div class="champion-row">
+        <span>Champion</span>
+        <select id="championSelect" class="std-select"></select>
+      </div>
+      <div class="field-label">Enter Physical d6 Roll</div>
+      <div class="dice-pad" id="bossPhaseDice">
+        <button class="dice-btn" data-roll="1">⚀</button>
+        <button class="dice-btn" data-roll="2">⚁</button>
+        <button class="dice-btn" data-roll="3">⚂</button>
+        <button class="dice-btn" data-roll="4">⚃</button>
+        <button class="dice-btn" data-roll="5">⚄</button>
+        <button class="dice-btn" data-roll="6">⚅</button>
+      </div>
+      <div class="field-label" style="margin-top:2px;">1–3 → Dragon +10 ATK · 4–6 → Champion +10 ATK</div>
+      <button id="bossRouteBtn" class="btn btn-danger">⚡ Alternate Boss Route (4v1)</button>
+      <div class="field-label">Unlocks once all 4 players have fallen to 0 HP</div>
+    </section>
+  </main>
+
+  <div class="log-bar" id="logBar">
+    <div class="log-bar-body" id="logBarBody">
+      <button id="undoBtn" class="btn btn-undo" disabled>↩ Undo Last Action</button>
+      <div class="combat-log" id="combatLog"></div>
+    </div>
+    <button class="log-bar-header" id="logBarToggle">
+      <span class="log-bar-title">📜 Log</span>
+      <span class="log-bar-latest" id="logBarLatest">No actions yet.</span>
+      <span class="log-bar-chevron">▲</span>
+    </button>
+  </div>
+
+  <button id="fabExecute" class="fab-execute" title="Execute Turn">⚔</button>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="fighters"><span class="tab-icon">🛡</span>Fighters</button>
+    <button class="tab-btn" data-tab="combat"><span class="tab-icon">⚔</span>Combat</button>
+    <button class="tab-btn" data-tab="moderator"><span class="tab-icon">⚠</span>Moderator</button>
+    <button class="tab-btn" data-tab="arena"><span class="tab-icon">🎲</span>Arena</button>
+  </nav>
+
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

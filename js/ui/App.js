@@ -12,6 +12,7 @@ import { CombatView } from './CombatView.js';
 import { ModeratorView } from './ModeratorView.js';
 import { ArenaView } from './ArenaView.js';
 import { TabNav } from './TabNav.js';
+import { HistoryView } from './HistoryView.js';
 
 const RESET_ARM_TIMEOUT_MS = 3000;
 
@@ -55,6 +56,12 @@ export class App {
 
     this.tabNav = new TabNav();
 
+    this.historyView = new HistoryView({
+      select: document.getElementById('battleSelect'),
+      archivedLog: document.getElementById('archivedLog'),
+      currentLogWrap: document.getElementById('currentLogWrap')
+    });
+
     this.logBar = document.getElementById('logBar');
     this.logBarToggle = document.getElementById('logBarToggle');
     this.fabExecute = document.getElementById('fabExecute');
@@ -86,6 +93,7 @@ export class App {
     this.combatView.render(this.state);
     this.moderatorView.render(this.state);
     this.arenaView.render(this.state);
+    this.historyView.render(this.state);
     this.tabNav.updateBadges(this.state);
     this.combatView.updateUndoButton(this.state.historyStack.length);
   }
@@ -113,6 +121,10 @@ export class App {
     this.logBarToggle.addEventListener('click', () => {
       this.logBar.classList.toggle('expanded');
       this.fabExecute.classList.toggle('log-open', this.logBar.classList.contains('expanded'));
+    });
+    document.getElementById('battleSelect').addEventListener('change', (e) => {
+      this.historyView.setViewing(e.target.value);
+      this.historyView.render(this.state);
     });
   }
 
@@ -317,8 +329,11 @@ export class App {
       this.resetBtn.classList.remove('armed');
 
       this.state.pushHistory(this.logger.getHtml());
+      this.state.archiveCurrentBattle(this.logger.getHtml());
       this.state.resetAll();
-      this.logger.log('— Tournament reset: HP/MP restored, counters cleared, potions/elixirs/blessings refreshed, modifiers cleared —');
+      this.historyView.setViewing('current');
+      this.logger.clear();
+      this.logger.log(`— Tournament reset: HP/MP restored, counters cleared, potions/elixirs/blessings refreshed, modifiers cleared — Battle ${this.state.battleNumber} begins —`);
       this.renderAll();
     });
   }

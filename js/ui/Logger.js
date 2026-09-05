@@ -28,4 +28,10 @@ export class Logger {
       this.latestEl.textContent = first ? first.textContent : 'No actions yet.';
     }
   }
+
+  /** Wipes the live log (used right after archiving it as a past battle). */
+  clear() {
+    this.el.innerHTML = '';
+    if (this.latestEl) this.latestEl.textContent = 'No actions yet.';
+  }
 }

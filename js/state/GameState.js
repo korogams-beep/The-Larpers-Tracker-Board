@@ -28,6 +28,11 @@ export class GameState {
     this.violationType = 'execution-fail';
 
     this.historyStack = [];
+
+    // Battle archive: each Reset Tournament files the log-so-far away as
+    // "Battle N" and the live log starts clean as the next battle number.
+    this.battleNumber = 1;
+    this.battleHistory = []; // [{ number, logHtml }], newest first
   }
 
   getEntity(id) {
@@ -54,7 +59,9 @@ export class GameState {
       championId: this.championId,
       bossRouteTriggered: this.bossRouteTriggered,
       violationTargetId: this.violationTargetId,
-      violationType: this.violationType
+      violationType: this.violationType,
+      battleNumber: this.battleNumber,
+      battleHistory: this.battleHistory
     }));
   }
 
@@ -70,6 +77,8 @@ export class GameState {
     this.bossRouteTriggered = snap.bossRouteTriggered;
     this.violationTargetId = snap.violationTargetId;
     this.violationType = snap.violationType;
+    this.battleNumber = snap.battleNumber;
+    this.battleHistory = snap.battleHistory;
   }
 
   pushHistory(logHtml) {
@@ -79,6 +88,20 @@ export class GameState {
 
   popHistory() {
     return this.historyStack.pop();
+  }
+
+  /**
+   * Files the current combat log away as "Battle N" and advances the
+   * counter so the next live log becomes the next battle number.
+   * Skips filing (and does not advance the number) if the log is empty,
+   * so an accidental Reset with no actions doesn't create a stray entry.
+   */
+  archiveCurrentBattle(logHtml) {
+    const hasContent = Boolean((logHtml || '').trim());
+    if (hasContent) {
+      this.battleHistory.unshift({ number: this.battleNumber, logHtml });
+      this.battleNumber += 1;
+    }
   }
 
   /** Reset Tournament: every fighter back to class/base max, all modifiers cleared. */

@@ -97,8 +97,13 @@
 
   <div class="log-bar" id="logBar">
     <div class="log-bar-body" id="logBarBody">
-      <button id="undoBtn" class="btn btn-undo" disabled>↩ Undo Last Action</button>
-      <div class="combat-log" id="combatLog"></div>
+      <div class="field-label">Viewing</div>
+      <select id="battleSelect" class="std-select"></select>
+      <div id="currentLogWrap">
+        <button id="undoBtn" class="btn btn-undo" disabled>↩ Undo Last Action</button>
+        <div class="combat-log" id="combatLog"></div>
+      </div>
+      <div class="combat-log" id="archivedLog" style="display:none;"></div>
     </div>
     <button class="log-bar-header" id="logBarToggle">
       <span class="log-bar-title">📜 Log</span>

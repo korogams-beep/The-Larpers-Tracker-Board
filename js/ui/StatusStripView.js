@@ -27,6 +27,7 @@ export class StatusStripView {
             <span class="chip-role">${label}</span>
             <span class="chip-name">${escapeHtml(e.name)}</span>
           </div>
+          ${e.type === 'player' ? `<span class="chip-class">${e.class}</span>` : ''}
           <div class="chip-vitals">
             <span class="chip-dot" style="background:${hpColor(p)}"></span><span class="chip-hp">${e.hp}/${e.maxHp}</span>
             <span class="chip-dot chip-dot-mp"></span><span class="chip-mp">${e.mp}/${e.maxMp}</span>

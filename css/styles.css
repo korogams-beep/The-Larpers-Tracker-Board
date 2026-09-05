@@ -43,7 +43,8 @@ body{
 .chip-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
 .chip-dot-mp{background:var(--mp-a);}
 .chip-name{font-family:'Cinzel',serif;color:var(--gold);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.chip-vitals{display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.chip-class{color:var(--parchment-dim);font-style:italic;font-size:10px;}
+.chip-vitals{display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-variant-numeric:tabular-nums;}
 .chip-hp, .chip-mp{color:var(--parchment-dim);}
 
 /* TAB PANELS */

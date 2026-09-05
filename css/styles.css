@@ -34,15 +34,16 @@ body{
 .icon-btn.armed{background:linear-gradient(#8f3327,#5c1811);border-color:#d16a55;color:#ffe6df;}
 
 .status-strip{display:flex;gap:8px;padding:0 12px 9px;}
-.status-chip{flex:1;display:flex;align-items:center;justify-content:flex-start;gap:6px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-size:11px;white-space:nowrap;overflow:hidden;}
+.status-chip{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:11px;overflow:hidden;min-width:0;}
 .status-chip.role-atk{border-color:var(--gold);}
 .status-chip.role-def{border-color:var(--danger);}
 .status-chip.is-down{opacity:.5;}
+.chip-row1{display:flex;align-items:center;gap:5px;width:100%;min-width:0;}
 .chip-role{font-family:'Cinzel',serif;font-size:9px;color:var(--parchment-dim);letter-spacing:.5px;flex:0 0 auto;}
 .chip-dot{width:7px;height:7px;border-radius:50%;flex:0 0 auto;}
 .chip-dot-mp{background:var(--mp-a);}
-.chip-name{font-family:'Cinzel',serif;color:var(--gold);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.chip-vitals{display:flex;align-items:center;gap:4px;flex:0 0 auto;font-variant-numeric:tabular-nums;}
+.chip-name{font-family:'Cinzel',serif;color:var(--gold);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chip-vitals{display:flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .chip-hp, .chip-mp{color:var(--parchment-dim);}
 
 /* TAB PANELS */

@@ -207,6 +207,14 @@ export class App {
   }
 
   bindCombatTab() {
+    document.getElementById('swapAtkDefBtn').addEventListener('click', () => {
+      const prevAttacker = this.state.selectedAttacker;
+      this.state.selectedAttacker = this.state.selectedDefender;
+      this.state.selectedDefender = prevAttacker;
+      this.state.selectedSkill = null;
+      this.renderAll();
+    });
+
     document.getElementById('attackerSelect').addEventListener('change', (e) => {
       this.state.selectedAttacker = e.target.value;
       this.state.selectedSkill = null;

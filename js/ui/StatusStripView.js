@@ -24,9 +24,11 @@ export class StatusStripView {
         const downed = e.hp <= 0;
         return `<div class="status-chip role-${role} ${downed ? 'is-down' : ''}" data-action="strip-jump" data-id="${e.id}">
           <span class="chip-role">${label}</span>
-          <span class="chip-dot" style="background:${hpColor(p)}"></span>
           <span class="chip-name">${escapeHtml(e.name)}</span>
-          <span class="chip-hp">${e.hp}/${e.maxHp}</span>
+          <span class="chip-vitals">
+            <span class="chip-dot" style="background:${hpColor(p)}"></span><span class="chip-hp">${e.hp}/${e.maxHp}</span>
+            <span class="chip-dot chip-dot-mp"></span><span class="chip-mp">${e.mp}/${e.maxMp}</span>
+          </span>
         </div>`;
       }).join('');
   }

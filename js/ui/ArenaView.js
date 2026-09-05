@@ -15,6 +15,8 @@ export class ArenaView {
     this.championSelect.innerHTML = state.players
       .map(p => `<option value="${p.id}" ${p.id === state.championId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`)
       .join('');
-    this.bossRouteBtn.disabled = state.bossRouteTriggered;
+
+    const allPlayersDown = state.players.every(p => p.hp <= 0);
+    this.bossRouteBtn.disabled = state.bossRouteTriggered || !allPlayersDown;
   }
 }

@@ -19,7 +19,7 @@ export class App {
   constructor() {
     this.state = new GameState();
 
-    this.logger = new Logger(document.getElementById('combatLog'));
+    this.logger = new Logger(document.getElementById('combatLog'), document.getElementById('logBarLatest'));
 
     const pushHistory = () => this.state.pushHistory(this.logger.getHtml());
     const log = (text) => this.logger.log(text);
@@ -55,6 +55,10 @@ export class App {
 
     this.tabNav = new TabNav();
 
+    this.logBar = document.getElementById('logBar');
+    this.logBarToggle = document.getElementById('logBarToggle');
+    this.fabExecute = document.getElementById('fabExecute');
+
     this.resetBtn = document.getElementById('resetBtn');
     this.resetArmed = false;
     this.resetTimer = null;
@@ -63,6 +67,17 @@ export class App {
   init() {
     this.bindEvents();
     this.renderAll();
+    this.positionLogBar();
+    window.addEventListener('resize', () => this.positionLogBar());
+  }
+
+  /** Keeps the persistent log bar (and the FAB above it) pinned correctly
+   *  above the tab bar, measured live so it works across devices/safe-areas. */
+  positionLogBar() {
+    const tabBarH = document.querySelector('.tab-bar').offsetHeight;
+    this.logBar.style.bottom = tabBarH + 'px';
+    const headerH = this.logBarToggle.offsetHeight;
+    this.fabExecute.style.bottom = (tabBarH + headerH + 12) + 'px';
   }
 
   renderAll() {
@@ -94,6 +109,10 @@ export class App {
       this.tabNav.switchTo('combat');
       this.combatEngine.execute();
       this.renderAll();
+    });
+    this.logBarToggle.addEventListener('click', () => {
+      this.logBar.classList.toggle('expanded');
+      this.fabExecute.classList.toggle('log-open', this.logBar.classList.contains('expanded'));
     });
   }
 
@@ -246,25 +265,28 @@ export class App {
       this.state.championId = e.target.value;
     });
 
-    document.getElementById('bossPhaseBtn').addEventListener('click', () => {
-      this.state.pushHistory(this.logger.getHtml());
-      const roll = 1 + Math.floor(Math.random() * 6);
-      const boss = this.state.boss;
-      if (roll <= 3) {
-        boss.atkBuff = (boss.atkBuff || 0) + 10;
-        this.logger.log(`🎲 Boss Phase roll: ${roll} — Dragon gains +10 ATK!`);
-      } else {
-        const champ = this.state.getEntity(this.state.championId);
-        if (champ) {
-          champ.atkBuff = (champ.atkBuff || 0) + 10;
-          this.logger.log(`🎲 Boss Phase roll: ${roll} — Champion ${champ.name} gains +10 ATK!`);
+    document.querySelectorAll('#bossPhaseDice .dice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const roll = parseInt(btn.dataset.roll, 10);
+        this.state.pushHistory(this.logger.getHtml());
+        const boss = this.state.boss;
+        if (roll <= 3) {
+          boss.atkBuff = (boss.atkBuff || 0) + 10;
+          this.logger.log(`🎲 Boss Phase (physical roll: ${roll}) — Dragon gains +10 ATK!`);
+        } else {
+          const champ = this.state.getEntity(this.state.championId);
+          if (champ) {
+            champ.atkBuff = (champ.atkBuff || 0) + 10;
+            this.logger.log(`🎲 Boss Phase (physical roll: ${roll}) — Champion ${champ.name} gains +10 ATK!`);
+          }
         }
-      }
-      this.renderAll();
+        this.renderAll();
+      });
     });
 
     document.getElementById('bossRouteBtn').addEventListener('click', () => {
       if (this.state.bossRouteTriggered) return;
+      if (!this.state.players.every(p => p.hp <= 0)) return;
       this.state.pushHistory(this.logger.getHtml());
       this.state.players.forEach(p => { p.hp = p.maxHp; p.mp = p.maxMp; p.forfeited = false; });
       this.state.boss.enterBossRoute();

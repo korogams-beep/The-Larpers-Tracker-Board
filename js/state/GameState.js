@@ -122,6 +122,7 @@ export class GameState {
     this.selectedSkill = null;
     this.selectedCounterOpt = 'none';
     this.violationType = 'execution-fail';
+    this.bracket = { leaves: [null, null, null, null], finalA: null, finalB: null, champion: null };
   }
 
   /** Randomly shuffles the 4 current players into fresh bracket leaves,

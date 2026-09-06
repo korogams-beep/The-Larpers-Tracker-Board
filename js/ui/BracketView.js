@@ -1,10 +1,12 @@
-// BracketView renders the 4-player elimination tree: two semifinal
-// matchups feeding into a champion. Tapping a leaf records that fighter
-// as its match's winner; tapping a decided finalist crowns the champion.
-// Once crowned, a "Send Champion to Fight the Dragon" action sets up the
-// Combat tab. If the Alternate Boss Route has been triggered, the tree
-// is replaced with a simple "All 4 Players vs Boss Dragon" display, since
-// there's no single champion in that stage — everyone fights together.
+// BracketView renders the 4-player elimination bracket as three clearly
+// labeled rounds (Semifinal 1, Semifinal 2, Final) stacked vertically,
+// each a simple "A vs B" row — no connector-line tricks that can misalign
+// or force horizontal scrolling on a phone. Tapping a fighter records
+// them as their match's winner; tapping a decided finalist crowns the
+// champion. Once crowned, a "Send Champion to Fight the Dragon" action
+// sets up the Combat tab. If the Alternate Boss Route has been triggered,
+// this is replaced with a simple "All 4 Players vs Boss Dragon" display,
+// since there's no single champion in that stage — everyone fights together.
 // Purely a renderer — App wires the actual click handling.
 
 import { escapeHtml } from '../utils/helpers.js';
@@ -28,7 +30,7 @@ export class BracketView {
     }
 
     const b = state.bracket;
-    const name = (id) => (id ? (state.getEntity(id)?.name ?? '?') : null);
+    const name = (id) => (id ? (state.getEntity(id)?.name ?? '?') : '?');
     const hasBracket = b.leaves.every(Boolean);
 
     if (!hasBracket) {
@@ -37,57 +39,58 @@ export class BracketView {
       return;
     }
 
-    const leafBtn = (id, target) => {
+    const matchupBtn = (id, target) => {
       const winner = b[target];
       const isWinner = winner === id;
       const isEliminated = winner && winner !== id;
       return `<button class="bracket-node ${isWinner ? 'is-winner' : ''} ${isEliminated ? 'is-eliminated' : ''}"
-                data-action="pick-winner" data-target="${target}" data-fighter="${id}">
-                ${name(id)}
-              </button>`;
+                data-action="pick-winner" data-target="${target}" data-fighter="${id}">${name(id)}</button>`;
     };
 
-    const finalBtn = (target) => {
+    const finalNode = (target) => {
       const id = b[target];
       const canPickChampion = Boolean(b.finalA && b.finalB);
-      const isChampionWinner = b.champion === id;
-      const isChampionLoser = b.champion && b.champion !== id && canPickChampion;
-      const label = id ? name(id) : '?';
-      return `<button class="bracket-node ${isChampionWinner ? 'is-winner' : ''} ${isChampionLoser ? 'is-eliminated' : ''}"
+      const isWin = b.champion === id;
+      const isLose = b.champion && b.champion !== id && canPickChampion;
+      return `<button class="bracket-node ${isWin ? 'is-winner' : ''} ${isLose ? 'is-eliminated' : ''}"
                 data-action="pick-winner" data-target="champion" data-fighter="${id || ''}"
-                ${!id || !canPickChampion ? 'disabled' : ''}>
-                ${label}
-              </button>`;
+                ${!id || !canPickChampion ? 'disabled' : ''}>${id ? name(id) : '?'}</button>`;
     };
 
     const championLabel = b.champion ? name(b.champion) : '?';
-
     const sendChampionHtml = b.champion ? `
       <button class="btn" data-action="send-champion">⚔ Send Champion to Fight the Dragon</button>` : '';
 
     this.container.innerHTML = banner + `
-      <div class="bracket-tree">
-        <ul>
-          <li>
-            <button class="bracket-node role-champion ${b.champion ? 'is-winner' : ''}" disabled>${championLabel}</button>
-            <ul>
-              <li>
-                ${finalBtn('finalA')}
-                <ul>
-                  <li>${leafBtn(b.leaves[0], 'finalA')}</li>
-                  <li>${leafBtn(b.leaves[1], 'finalA')}</li>
-                </ul>
-              </li>
-              <li>
-                ${finalBtn('finalB')}
-                <ul>
-                  <li>${leafBtn(b.leaves[2], 'finalB')}</li>
-                  <li>${leafBtn(b.leaves[3], 'finalB')}</li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-        </ul>
+      <div class="bracket-rounds">
+        <div class="bracket-round">
+          <div class="bracket-round-title">Semifinal 1</div>
+          <div class="bracket-matchup">
+            ${matchupBtn(b.leaves[0], 'finalA')}
+            <span class="bracket-vs-sm">VS</span>
+            ${matchupBtn(b.leaves[1], 'finalA')}
+          </div>
+        </div>
+        <div class="bracket-round">
+          <div class="bracket-round-title">Semifinal 2</div>
+          <div class="bracket-matchup">
+            ${matchupBtn(b.leaves[2], 'finalB')}
+            <span class="bracket-vs-sm">VS</span>
+            ${matchupBtn(b.leaves[3], 'finalB')}
+          </div>
+        </div>
+        <div class="bracket-round bracket-final-round">
+          <div class="bracket-round-title">Final</div>
+          <div class="bracket-matchup">
+            ${finalNode('finalA')}
+            <span class="bracket-vs-sm">VS</span>
+            ${finalNode('finalB')}
+          </div>
+        </div>
+        <div class="bracket-round bracket-champion-round">
+          <div class="bracket-round-title">Champion</div>
+          <button class="bracket-node role-champion ${b.champion ? 'is-winner' : ''}" disabled>${championLabel}</button>
+        </div>
       </div>
       ${sendChampionHtml}`;
   }

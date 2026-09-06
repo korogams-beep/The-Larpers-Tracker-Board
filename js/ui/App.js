@@ -13,6 +13,7 @@ import { ModeratorView } from './ModeratorView.js';
 import { ArenaView } from './ArenaView.js';
 import { TabNav } from './TabNav.js';
 import { HistoryView } from './HistoryView.js';
+import { BracketView } from './BracketView.js';
 
 const RESET_ARM_TIMEOUT_MS = 3000;
 
@@ -62,6 +63,8 @@ export class App {
       currentLogWrap: document.getElementById('currentLogWrap')
     });
 
+    this.bracketView = new BracketView(document.getElementById('bracketContainer'));
+
     this.logBar = document.getElementById('logBar');
     this.logBarToggle = document.getElementById('logBarToggle');
     this.fabExecute = document.getElementById('fabExecute');
@@ -94,6 +97,7 @@ export class App {
     this.moderatorView.render(this.state);
     this.arenaView.render(this.state);
     this.historyView.render(this.state);
+    this.bracketView.render(this.state);
     this.tabNav.updateBadges(this.state);
     this.combatView.updateUndoButton(this.state.historyStack.length);
   }
@@ -112,6 +116,7 @@ export class App {
     this.bindCombatTab();
     this.bindModeratorTab();
     this.bindArenaTab();
+    this.bindBracketTab();
     this.bindResetButton();
     document.getElementById('fabExecute').addEventListener('click', () => {
       this.tabNav.switchTo('combat');
@@ -313,6 +318,56 @@ export class App {
       this.state.bossRouteTriggered = true;
       this.logger.log("⚡ Alternate Boss Route triggered! All players revived to full HP/MP — Boss Dragon's stats are doubled (800 HP) for the 4v1 showdown.");
       this.renderAll();
+    });
+  }
+
+  bindBracketTab() {
+    const randomizeBtn = document.getElementById('randomizeBracketBtn');
+    let armed = false;
+    let armTimer = null;
+
+    randomizeBtn.addEventListener('click', () => {
+      if (!armed) {
+        armed = true;
+        randomizeBtn.textContent = 'Tap to Confirm';
+        randomizeBtn.classList.add('armed');
+        clearTimeout(armTimer);
+        armTimer = setTimeout(() => {
+          armed = false;
+          randomizeBtn.textContent = '🔀 Randomize Bracket';
+          randomizeBtn.classList.remove('armed');
+        }, RESET_ARM_TIMEOUT_MS);
+        return;
+      }
+      armed = false;
+      clearTimeout(armTimer);
+      randomizeBtn.textContent = '🔀 Randomize Bracket';
+      randomizeBtn.classList.remove('armed');
+
+      this.state.generateBracket();
+      this.renderAll();
+    });
+
+    document.getElementById('bracketContainer').addEventListener('click', (e) => {
+      const pickBtn = e.target.closest('[data-action="pick-winner"]');
+      if (pickBtn && !pickBtn.disabled) {
+        this.state.pickBracketWinner(pickBtn.dataset.target, pickBtn.dataset.fighter);
+        this.renderAll();
+        return;
+      }
+
+      const sendBtn = e.target.closest('[data-action="send-champion"]');
+      if (sendBtn) {
+        const champId = this.state.bracket.champion;
+        const champion = this.state.getEntity(champId);
+        if (!champion) return;
+        this.state.selectedAttacker = champId;
+        this.state.selectedDefender = 'boss';
+        this.state.selectedSkill = null;
+        this.logger.log(`🐉 ${champion.name} steps forward to face the Boss Dragon!`);
+        this.renderAll();
+        this.tabNav.switchTo('combat');
+      }
     });
   }
 

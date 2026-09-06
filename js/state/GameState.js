@@ -33,6 +33,10 @@ export class GameState {
     // "Battle N" and the live log starts clean as the next battle number.
     this.battleNumber = 1;
     this.battleHistory = []; // [{ number, logHtml }], newest first
+
+    // Player bracket: 4 leaves (fighter ids in randomized order) feeding
+    // into two semifinal winners, feeding into one champion.
+    this.bracket = { leaves: [null, null, null, null], finalA: null, finalB: null, champion: null };
   }
 
   getEntity(id) {
@@ -61,7 +65,8 @@ export class GameState {
       violationTargetId: this.violationTargetId,
       violationType: this.violationType,
       battleNumber: this.battleNumber,
-      battleHistory: this.battleHistory
+      battleHistory: this.battleHistory,
+      bracket: this.bracket
     }));
   }
 
@@ -79,6 +84,7 @@ export class GameState {
     this.violationType = snap.violationType;
     this.battleNumber = snap.battleNumber;
     this.battleHistory = snap.battleHistory;
+    this.bracket = snap.bracket;
   }
 
   pushHistory(logHtml) {
@@ -116,5 +122,57 @@ export class GameState {
     this.selectedSkill = null;
     this.selectedCounterOpt = 'none';
     this.violationType = 'execution-fail';
+  }
+
+  /** Randomly shuffles the 4 current players into fresh bracket leaves,
+   *  clearing any previous winner picks. */
+  generateBracket() {
+    const ids = this.players.map(p => p.id);
+    for (let i = ids.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+    }
+    this.bracket = { leaves: ids, finalA: null, finalB: null, champion: null };
+  }
+
+  /**
+   * Records a match winner. target is 'finalA', 'finalB', or 'champion'.
+   * Picking (or re-picking) a semifinal winner clears any champion already
+   * chosen, since the finalist pool changed. Picking a champion also syncs
+   * championId so Arena's Boss Phase roll / Champion Restore use the result.
+   */
+  pickBracketWinner(target, fighterId) {
+    if (target === 'finalA' || target === 'finalB') {
+      this.bracket[target] = fighterId;
+      this.bracket.champion = null;
+    } else if (target === 'champion') {
+      if (!this.bracket.finalA || !this.bracket.finalB) return;
+      this.bracket.champion = fighterId;
+      this.championId = fighterId;
+    }
+  }
+
+  /** Derives the current bracket stage and which Arena modifier applies to it. */
+  get bracketStage() {
+    if (this.bossRouteTriggered) {
+      return {
+        title: '⚡ Alternate Boss Route',
+        modifier: 'All 4 Players (revived) vs Boss Dragon (800 HP) — 4v1 Battle'
+      };
+    }
+    const b = this.bracket;
+    if (b.champion) {
+      return {
+        title: '👑 Tournament Complete',
+        modifier: `Champion: ${this.getEntity(b.champion)?.name || '?'} — ready to face the Boss Dragon`
+      };
+    }
+    if (b.finalA && b.finalB) {
+      return { title: '🏆 Final (Round 2)', modifier: 'Arena Modifier: All players heal 10 HP per turn' };
+    }
+    if (b.leaves.every(Boolean)) {
+      return { title: '🥊 Semifinals (Round 1)', modifier: 'Arena Modifier: +10 Damage to all attacks' };
+    }
+    return { title: 'No bracket yet', modifier: 'Tap "Randomize Bracket" to begin' };
   }
 }

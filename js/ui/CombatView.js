@@ -128,19 +128,19 @@ export class CombatView {
       return;
     }
 
+    // Counter costs no MP for any class — only the per-match charge count
+    // ever gates whether it can be used.
     const remaining = defender.maxCounters - defender.countersChecked.filter(Boolean).length;
     const cd = CLASS_DATA[defender.class].counter;
-    const mpOk = defender.mp >= Math.abs(cd.mp);
-    counterOptionEl.disabled = remaining <= 0 || !mpOk;
+    counterOptionEl.disabled = remaining <= 0;
     if (state.selectedCounterOpt === 'counter' && counterOptionEl.disabled) {
       state.selectedCounterOpt = 'none'; this.counterSelect.value = 'none';
     }
 
-    let desc = `${defender.class} Counter: ${cd.mp} MP, `;
+    let desc = `${defender.class} Counter: 0 MP, `;
     desc += cd.type === 'reduce' ? `-${cd.reduce * 100}% DMG taken` : `absorbs ${cd.absorb} flat DMG`;
     if (cd.reflect) desc += `, reflects ${cd.reflect} DMG`;
     desc += `. Remaining: ${remaining}/${defender.maxCounters}.`;
-    if (remaining > 0 && !mpOk) desc += ' Not enough MP to counter!';
     this.counterInfo.textContent = desc;
   }
 

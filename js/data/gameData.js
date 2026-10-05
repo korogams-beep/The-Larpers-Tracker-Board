@@ -9,7 +9,7 @@ export const CLASS_DATA = {
       primary: { mp: -20, dmg: 45 },
       ultimate: { mp: -40, dmg: 65, status: 'stun' }
     },
-    counter: { mp: -15, type: 'reduce', reduce: 0.5, reflect: 10 }
+    counter: { mp: 0, type: 'reduce', reduce: 0.5, reflect: 10 }
   },
   Brawler: {
     hp: 210, mp: 40, counters: 3,
@@ -18,7 +18,7 @@ export const CLASS_DATA = {
       primary: { mp: -10, dmg: 35 },
       ultimate: { mp: -25, dmg: 80, status: 'shatter' }
     },
-    counter: { mp: -10, type: 'reduce', reduce: 0.5 }
+    counter: { mp: 0, type: 'reduce', reduce: 0.5 }
   },
   Archer: {
     hp: 180, mp: 80, counters: 2,
@@ -27,7 +27,7 @@ export const CLASS_DATA = {
       primary: { mp: -25, dmg: 50, status: 'blind' },
       ultimate: { mp: -50, dmg: 85 }
     },
-    counter: { mp: -15, type: 'reduce', reduce: 0.5 }
+    counter: { mp: 0, type: 'reduce', reduce: 0.5 }
   },
   Mage: {
     hp: 160, mp: 110, counters: 2,
@@ -36,7 +36,7 @@ export const CLASS_DATA = {
       primary: { mp: -30, dmg: 50, status: 'burn' },
       ultimate: { mp: -55, dmg: 85 }
     },
-    counter: { mp: -20, type: 'absorb', absorb: 30 }
+    counter: { mp: 0, type: 'absorb', absorb: 30 }
   }
 };
 

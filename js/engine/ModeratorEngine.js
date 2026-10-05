@@ -38,6 +38,12 @@ export class ModeratorEngine {
       return;
     }
 
+    if (v.warnFirst && !target.oocWarned) {
+      target.oocWarned = true;
+      this.log(`⚠ Moderator issues a verbal '${v.call}' to ${target.name} — first offense, warning only, no penalty.`);
+      return;
+    }
+
     const prevHp = target.hp;
     target.hp = clamp(target.hp - v.hpPenalty, 0, target.maxHp);
 
@@ -51,7 +57,8 @@ export class ModeratorEngine {
       }
     }
 
-    this.log(`⚠ Moderator calls '${v.call}' on ${target.name} — -${v.hpPenalty} HP${mpNote}.`);
+    const repeatNote = v.warnFirst ? ' (repeat offense)' : '';
+    this.log(`⚠ Moderator calls '${v.call}' on ${target.name}${repeatNote} — -${v.hpPenalty} HP${mpNote}.`);
     if (prevHp > 0 && target.hp <= 0) this.log(`💀 ${target.name} has been defeated by penalty!`);
   }
 }

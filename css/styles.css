@@ -30,8 +30,16 @@ body{
 .app-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px;}
 .app-header h1{font-family:'Cinzel',serif;font-weight:800;letter-spacing:2px;font-size:18px;margin:0;color:var(--gold);}
 .app-header .subtitle{font-size:9.5px;color:var(--parchment-dim);letter-spacing:1px;display:block;}
+.header-actions{display:flex;align-items:center;gap:8px;}
 .icon-btn{background:linear-gradient(#3a2c1c,#2a2013);border:1px solid var(--danger);color:#f3d3ce;border-radius:8px;padding:9px 14px;font-size:13px;line-height:1;font-family:'Cinzel',serif;font-weight:600;letter-spacing:.5px;white-space:nowrap;}
 .icon-btn.armed{background:linear-gradient(#8f3327,#5c1811);border-color:#d16a55;color:#ffe6df;}
+.header-actions .icon-btn:not(.armed){border-color:var(--border-light);color:var(--parchment);}
+.icon-btn:disabled{opacity:.35;}
+
+.pending-banner{display:block;width:calc(100% - 24px);margin:0 12px 9px;font-family:'Cinzel',serif;font-size:11.5px;font-weight:600;letter-spacing:.3px;text-align:left;border-radius:8px;padding:9px 12px;color:var(--parchment);cursor:pointer;animation:pending-pulse 1.8s ease-in-out infinite;}
+.pending-banner.is-roll{background:linear-gradient(#3a2060,#1e1030);border:1px solid #8a5fd9;color:#e8d8ff;}
+.pending-banner.is-lock{background:linear-gradient(#5c3a10,#2e1c08);border:1px solid var(--boss-a);color:#ffe3b0;}
+@keyframes pending-pulse{0%,100%{opacity:1;}50%{opacity:.75;}}
 
 .status-strip{display:flex;gap:8px;padding:0 12px 9px;}
 .status-chip{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;padding:6px 9px;font-size:11px;overflow:hidden;min-width:0;}
@@ -46,6 +54,10 @@ body{
 .chip-class{color:var(--parchment-dim);font-style:italic;font-size:10px;}
 .chip-vitals{display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-variant-numeric:tabular-nums;}
 .chip-hp, .chip-mp{color:var(--parchment-dim);}
+.chip-actions{display:flex;gap:4px;width:100%;margin-top:3px;}
+.chip-btn{flex:1;font-size:9.5px;font-weight:600;padding:5px 2px;border-radius:6px;border:1px solid var(--border);background:var(--bg-card);color:var(--parchment);font-family:'Inter',sans-serif;min-height:26px;}
+.chip-btn:disabled{opacity:.35;}
+.chip-btn.clear-lock{width:100%;margin-top:3px;border-color:var(--gold-dim);}
 
 /* TAB PANELS */
 .tab-panel{display:none;padding:12px 12px 20px;gap:12px;flex-direction:column;}
@@ -80,6 +92,11 @@ body{
 .buff-badge{color:#d8ffbf;background:linear-gradient(#2e4a1a,#152608);border:1px solid var(--success);}
 .defeated-badge{color:#ffd0d0;background:linear-gradient(#5c1a14,#2e0c0a);border:1px solid var(--danger);}
 .violation-badge{color:#ffe3b0;background:linear-gradient(#5c3a10,#2e1c08);border:1px solid var(--boss-a);}
+.status-badge{font-size:9.5px;font-family:'Cinzel',serif;letter-spacing:.5px;padding:2px 7px;border-radius:10px;}
+.status-badge.status-stun{color:#e8d8ff;background:linear-gradient(#3a2060,#1e1030);border:1px solid #8a5fd9;}
+.status-badge.status-shatter{color:#d8ecff;background:linear-gradient(#1a3a5c,#0c1e30);border:1px solid var(--mp-a);}
+.status-badge.status-blind{color:#e6e6e6;background:linear-gradient(#3c3c3c,#1e1e1e);border:1px solid #9a9a9a;}
+.status-badge.status-burn{color:#ffd8b0;background:linear-gradient(#5c2e10,#2e1608);border:1px solid var(--boss-a);}
 .select-row{display:flex;gap:6px;}
 .select-row button{flex:1;font-size:10px;padding:6px 3px;border-radius:6px;border:1px solid var(--border);background:var(--bg-panel);color:var(--parchment-dim);font-family:'Inter',sans-serif;font-weight:600;}
 .select-row .btn-set-atk.active{border-color:var(--gold);color:var(--gold);}
@@ -151,6 +168,11 @@ body{
 .dice-pad{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;}
 .dice-btn{aspect-ratio:1;font-size:26px;line-height:1;background:var(--bg-panel);border:1px solid var(--border);border-radius:8px;color:var(--parchment);display:flex;align-items:center;justify-content:center;}
 .dice-btn:active{transform:scale(.92);background:var(--bg-card-alt);border-color:var(--gold-dim);}
+
+.status-roll-prompt{background:var(--bg-panel);border:1px solid #8a5fd9;border-radius:8px;padding:10px 12px;margin-top:4px;}
+.status-roll-prompt .field-label{margin-top:0;color:#d8c4ff;}
+
+.critical-note{font-size:12px;color:#ffd7a8;background:linear-gradient(#4a1f04,#2a1206);border:1px solid var(--boss-a);border-radius:8px;padding:10px 12px;line-height:1.5;margin-top:2px;}
 
 /* Generic tap-to-confirm "armed" state for full-width buttons (Randomize Bracket, etc.) */
 .btn.armed{background:linear-gradient(#8f3327,#5c1811);border-color:#d16a55;color:#ffe6df;}

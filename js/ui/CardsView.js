@@ -1,7 +1,7 @@
 // CardsView renders the Fighters tab: one card per entity, 2x2 grid with the
 // Boss spanning full width (handled purely via CSS grid rules).
 
-import { CLASS_NAMES } from '../data/gameData.js';
+import { CLASS_NAMES, STATUS_EFFECTS } from '../data/gameData.js';
 import { escapeHtml, pct, hpColor } from '../utils/helpers.js';
 
 export class CardsView {
@@ -39,17 +39,24 @@ export class CardsView {
 
     const consumablesHtml = isBoss ? '' : `
       <div class="consumables-row">
-        <button class="btn-consumable potion" data-action="potion" data-id="${e.id}" ${!e.hasPotion ? 'disabled' : ''}>${e.hasPotion ? '+50 HP' : 'Potion Used'}</button>
-        <button class="btn-consumable elixir" data-action="elixir" data-id="${e.id}" ${!e.hasElixir ? 'disabled' : ''}>${e.hasElixir ? '+40 MP' : 'Elixir Used'}</button>
+        <button class="btn-consumable potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || e.turnLocked) ? 'disabled' : ''}>${e.hasPotion ? '+50 HP' : 'Potion Used'}</button>
+        <button class="btn-consumable elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || e.turnLocked) ? 'disabled' : ''}>${e.hasElixir ? '+40 MP' : 'Elixir Used'}</button>
       </div>
-      <button class="btn-consumable champion-btn" data-action="champion-restore" data-id="${e.id}" ${!e.hasChampionBlessing ? 'disabled' : ''}>${e.hasChampionBlessing ? '👑 Champion Restore' : '👑 Used'}</button>`;
+      <button class="btn-consumable champion-btn" data-action="champion-restore" data-id="${e.id}" ${!e.hasChampionBlessing ? 'disabled' : ''}>${e.hasChampionBlessing ? '👑 Champion Restore' : '👑 Used'}</button>
+      ${e.turnLocked ? `<button class="btn-consumable champion-btn" data-action="clear-turn-lock" data-id="${e.id}">⏳ Clear Turn Lock</button>` : ''}`;
 
     const badges = [];
     if (enraged) badges.push(`<span class="enrage-badge">ENRAGED +10 DMG</span>`);
     if (e.atkBuff > 0) badges.push(`<span class="buff-badge">+${e.atkBuff} ATK</span>`);
     if (e.forfeited) badges.push(`<span class="defeated-badge">FORFEITED</span>`);
-    else if (downed) badges.push(`<span class="defeated-badge">DOWNED — LAST DITCH</span>`);
+    else if (downed && state.championDuelActive) badges.push(`<span class="defeated-badge">DOWNED — LAST DITCH</span>`);
+    else if (downed) badges.push(`<span class="defeated-badge">DOWNED</span>`);
     if (e.forcedBasic) badges.push(`<span class="violation-badge">HESITATION</span>`);
+    if (e.turnLocked) badges.push(`<span class="violation-badge">TURN CONSUMED</span>`);
+    if (e.statusStun) badges.push(`<span class="status-badge status-stun">${STATUS_EFFECTS.stun.badge}</span>`);
+    if (e.statusShatter) badges.push(`<span class="status-badge status-shatter">${STATUS_EFFECTS.shatter.badge}</span>`);
+    if (e.statusBlind) badges.push(`<span class="status-badge status-blind">${STATUS_EFFECTS.blind.badge}</span>`);
+    if (e.statusBurn) badges.push(`<span class="status-badge status-burn">${STATUS_EFFECTS.burn.badge}</span>`);
 
     return `
       <div class="card ${isBoss ? 'is-boss' : ''} ${isAtk ? 'is-attacker' : ''} ${isDef ? 'is-defender' : ''}">

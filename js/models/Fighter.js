@@ -11,6 +11,15 @@ export class Fighter {
     this.atkBuff = 0;
     this.forcedBasic = false;
     this.forfeited = false;
+
+    // v5 rulebook additions
+    this.turnLocked = false;    // used a Potion/Elixir — cannot attack this turn
+    this.oocWarned = false;     // has already received their one free OOC warning
+    this.statusStun = false;    // loses their entire next turn
+    this.statusShatter = false; // cannot use Counter on their next turn (as defender)
+    this.statusBlind = false;   // their next attack deals half damage
+    this.statusBurn = false;    // takes 15 DMG at the start of their next turn
+    this.lastDitchUsed = false; // Last Ditch Effort can only ever be performed once
   }
 
   get isDowned() {
@@ -43,6 +52,13 @@ export class PlayerFighter extends Fighter {
     this.atkBuff = 0;
     this.forcedBasic = false;
     this.forfeited = false;
+    this.turnLocked = false;
+    this.oocWarned = false;
+    this.statusStun = false;
+    this.statusShatter = false;
+    this.statusBlind = false;
+    this.statusBurn = false;
+    this.lastDitchUsed = false;
   }
 
   getClassData() {
@@ -72,11 +88,12 @@ export class BossFighter extends Fighter {
     this.atkBuff = 0;
     this.forcedBasic = false;
     this.forfeited = false;
-  }
-
-  /** Alternate Boss Route (4v1): doubles the Dragon's stats to 800 HP. */
-  enterBossRoute() {
-    this.maxHp = BOSS_DATA.hp * 2;
-    this.hp = this.maxHp;
+    this.turnLocked = false;
+    this.oocWarned = false;
+    this.statusStun = false;
+    this.statusShatter = false;
+    this.statusBlind = false;
+    this.statusBurn = false;
+    this.lastDitchUsed = false;
   }
 }

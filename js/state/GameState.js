@@ -22,7 +22,10 @@ export class GameState {
 
     this.round1Active = false;
     this.championId = 'p1';
-    this.bossRouteTriggered = false;
+
+    // Once the Champion is sent to fight the Boss Dragon, the Combat tab's
+    // Attacker/Defender pickers narrow to just those two combatants.
+    this.championDuelActive = false;
 
     this.violationTargetId = 'p1';
     this.violationType = 'execution-fail';
@@ -37,6 +40,10 @@ export class GameState {
     // Player bracket: 4 leaves (fighter ids in randomized order) feeding
     // into two semifinal winners, feeding into one champion.
     this.bracket = { leaves: [null, null, null, null], finalA: null, finalB: null, champion: null };
+
+    // When a skill that can inflict a status effect lands, this holds
+    // { effect, targetId } until the GM taps their physical 1d6 result.
+    this.pendingStatusRoll = null;
   }
 
   getEntity(id) {
@@ -61,12 +68,13 @@ export class GameState {
       selectedCounterOpt: this.selectedCounterOpt,
       round1Active: this.round1Active,
       championId: this.championId,
-      bossRouteTriggered: this.bossRouteTriggered,
+      championDuelActive: this.championDuelActive,
       violationTargetId: this.violationTargetId,
       violationType: this.violationType,
       battleNumber: this.battleNumber,
       battleHistory: this.battleHistory,
-      bracket: this.bracket
+      bracket: this.bracket,
+      pendingStatusRoll: this.pendingStatusRoll
     }));
   }
 
@@ -79,12 +87,13 @@ export class GameState {
     this.selectedCounterOpt = snap.selectedCounterOpt;
     this.round1Active = snap.round1Active;
     this.championId = snap.championId;
-    this.bossRouteTriggered = snap.bossRouteTriggered;
+    this.championDuelActive = snap.championDuelActive;
     this.violationTargetId = snap.violationTargetId;
     this.violationType = snap.violationType;
     this.battleNumber = snap.battleNumber;
     this.battleHistory = snap.battleHistory;
     this.bracket = snap.bracket;
+    this.pendingStatusRoll = snap.pendingStatusRoll;
   }
 
   pushHistory(logHtml) {
@@ -118,11 +127,36 @@ export class GameState {
     });
     this.round1Active = false;
     this.championId = this.players[0].id;
-    this.bossRouteTriggered = false;
+    this.championDuelActive = false;
     this.selectedSkill = null;
     this.selectedCounterOpt = 'none';
     this.violationType = 'execution-fail';
     this.bracket = { leaves: [null, null, null, null], finalA: null, finalB: null, champion: null };
+    this.pendingStatusRoll = null;
+  }
+
+  /**
+   * Round 2 (Semi-Finals) Arena Modifier: FULL RESTORE. All players go back
+   * to max HP/MP, their Potion/Elixir/turn-lock reset, and their counter
+   * checkboxes clear. Deliberately does NOT touch: oocWarned (a disciplinary
+   * record for the whole match, not a buff), hasChampionBlessing (a separate
+   * once-per-tournament bonus), forfeited (a hard elimination a heal
+   * shouldn't undo), or lastDitchUsed (Last Ditch Effort is a once-per-match
+   * privilege, not something a mid-match heal should refresh).
+   */
+  fullRestoreRound2() {
+    this.players.forEach(p => {
+      p.hp = p.maxHp;
+      p.mp = p.maxMp;
+      p.hasPotion = true;
+      p.hasElixir = true;
+      p.countersChecked = Array(p.maxCounters).fill(false);
+      p.turnLocked = false;
+      p.statusStun = false;
+      p.statusShatter = false;
+      p.statusBlind = false;
+      p.statusBurn = false;
+    });
   }
 
   /** Randomly shuffles the 4 current players into fresh bracket leaves,
@@ -134,6 +168,7 @@ export class GameState {
       [ids[i], ids[j]] = [ids[j], ids[i]];
     }
     this.bracket = { leaves: ids, finalA: null, finalB: null, champion: null };
+    this.championDuelActive = false;
   }
 
   /**
@@ -155,12 +190,6 @@ export class GameState {
 
   /** Derives the current bracket stage and which Arena modifier applies to it. */
   get bracketStage() {
-    if (this.bossRouteTriggered) {
-      return {
-        title: '⚡ Alternate Boss Route',
-        modifier: 'All 4 Players (revived) vs Boss Dragon (800 HP) — 4v1 Battle'
-      };
-    }
     const b = this.bracket;
     if (b.champion) {
       return {
@@ -169,7 +198,7 @@ export class GameState {
       };
     }
     if (b.finalA && b.finalB) {
-      return { title: '🏆 Final (Round 2)', modifier: 'Arena Modifier: All players heal 10 HP per turn' };
+      return { title: '🏆 Final (Round 2)', modifier: 'Arena Modifier: FULL RESTORE — all players back to Max HP/MP, Potions & Counters renew' };
     }
     if (b.leaves.every(Boolean)) {
       return { title: '🥊 Semifinals (Round 1)', modifier: 'Arena Modifier: +10 Damage to all attacks' };

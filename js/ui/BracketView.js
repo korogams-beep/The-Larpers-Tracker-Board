@@ -4,12 +4,7 @@
 // or force horizontal scrolling on a phone. Tapping a fighter records
 // them as their match's winner; tapping a decided finalist crowns the
 // champion. Once crowned, a "Send Champion to Fight the Dragon" action
-// sets up the Combat tab. If the Alternate Boss Route has been triggered,
-// this is replaced with a simple "All 4 Players vs Boss Dragon" display,
-// since there's no single champion in that stage — everyone fights together.
-// Purely a renderer — App wires the actual click handling.
-
-import { escapeHtml } from '../utils/helpers.js';
+// sets up the Combat tab. Purely a renderer — App wires the actual click handling.
 
 export class BracketView {
   constructor(container) {
@@ -23,11 +18,6 @@ export class BracketView {
         <div class="bracket-banner-title">${stage.title}</div>
         <div class="bracket-banner-modifier">${stage.modifier}</div>
       </div>`;
-
-    if (state.bossRouteTriggered) {
-      this.container.innerHTML = banner + this.routeHtml(state);
-      return;
-    }
 
     const b = state.bracket;
     const name = (id) => (id ? (state.getEntity(id)?.name ?? '?') : '?');
@@ -93,18 +83,5 @@ export class BracketView {
         </div>
       </div>
       ${sendChampionHtml}`;
-  }
-
-  routeHtml(state) {
-    const playersHtml = state.players
-      .map(p => `<div class="bracket-node ${p.hp <= 0 ? '' : 'is-winner'}">${escapeHtml(p.name)}</div>`)
-      .join('');
-    const boss = state.boss;
-    return `
-      <div class="bracket-route">
-        <div class="bracket-route-players">${playersHtml}</div>
-        <div class="bracket-vs">⚔ VS ⚔</div>
-        <div class="bracket-node role-champion">${escapeHtml(boss.name)} (${boss.hp}/${boss.maxHp} HP)</div>
-      </div>`;
   }
 }

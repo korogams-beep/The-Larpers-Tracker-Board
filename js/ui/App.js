@@ -8,6 +8,7 @@ import { ModeratorEngine } from '../engine/ModeratorEngine.js';
 import { Logger } from './Logger.js';
 import { CardsView } from './CardsView.js';
 import { StatusStripView } from './StatusStripView.js';
+import { PendingBannerView } from './PendingBannerView.js';
 import { CombatView } from './CombatView.js';
 import { ModeratorView } from './ModeratorView.js';
 import { ArenaView } from './ArenaView.js';
@@ -31,6 +32,7 @@ export class App {
 
     this.cardsView = new CardsView(document.getElementById('cardsRow'));
     this.statusStrip = new StatusStripView(document.getElementById('statusStrip'));
+    this.pendingBanner = new PendingBannerView(document.getElementById('pendingBanner'));
 
     this.combatView = new CombatView({
       attackerSelect: document.getElementById('attackerSelect'),
@@ -38,7 +40,10 @@ export class App {
       skillsWrap: document.getElementById('attackerSkills'),
       counterSelect: document.getElementById('counterSelect'),
       counterInfo: document.getElementById('counterInfo'),
-      undoBtn: document.getElementById('undoBtn')
+      undoBtn: document.getElementById('undoBtn'),
+      executeBtn: document.getElementById('executeBtn'),
+      statusRollPrompt: document.getElementById('statusRollPrompt'),
+      statusRollLabel: document.getElementById('statusRollLabel')
     });
 
     this.moderatorView = new ModeratorView({
@@ -51,8 +56,7 @@ export class App {
 
     this.arenaView = new ArenaView({
       round1Toggle: document.getElementById('round1Toggle'),
-      championSelect: document.getElementById('championSelect'),
-      bossRouteBtn: document.getElementById('bossRouteBtn')
+      championSelect: document.getElementById('championSelect')
     });
 
     this.tabNav = new TabNav();
@@ -93,6 +97,7 @@ export class App {
   renderAll() {
     this.cardsView.render(this.state);
     this.statusStrip.render(this.state);
+    this.pendingBanner.render(this.state);
     this.combatView.render(this.state);
     this.moderatorView.render(this.state);
     this.arenaView.render(this.state);
@@ -113,6 +118,7 @@ export class App {
   bindEvents() {
     this.bindCardsRow();
     this.bindStatusStrip();
+    this.bindPendingBanner();
     this.bindCombatTab();
     this.bindModeratorTab();
     this.bindArenaTab();
@@ -133,6 +139,53 @@ export class App {
     });
   }
 
+  /** Shared by the Fighters-tab cards and the top status-strip quick-action
+   *  buttons, so a Potion/Elixir/Clear can be tapped from either place. */
+  handleCardAction(action, entity) {
+    const pushHistory = () => this.state.pushHistory(this.logger.getHtml());
+
+    switch (action) {
+      case 'potion':
+        if (!entity.hasPotion) return;
+        // A fighter whose turn is already consumed (by this Potion, an
+        // Elixir, or anything else) cannot also drink a second consumable
+        // on the same turn — each one eats its own turn individually.
+        if (entity.turnLocked) { this.logger.log(`${entity.name}'s turn is already consumed this turn — cannot also drink a Potion.`); return; }
+        pushHistory();
+        entity.hp = Math.min(entity.hp + 50, entity.maxHp);
+        entity.hasPotion = false;
+        entity.turnLocked = true;
+        this.logger.log(`${entity.name} drinks a Potion (+50 HP) — turn consumed, no attack this turn.`);
+        this.renderAll();
+        break;
+      case 'elixir':
+        if (!entity.hasElixir) return;
+        if (entity.turnLocked) { this.logger.log(`${entity.name}'s turn is already consumed this turn — cannot also drink an Elixir.`); return; }
+        pushHistory();
+        entity.mp = Math.min(entity.mp + 40, entity.maxMp);
+        entity.hasElixir = false;
+        entity.turnLocked = true;
+        this.logger.log(`${entity.name} drinks a Mana Elixir (+40 MP) — turn consumed, no attack this turn.`);
+        this.renderAll();
+        break;
+      case 'clear-turn-lock':
+        pushHistory();
+        entity.turnLocked = false;
+        this.logger.log(`${entity.name}'s next turn begins — they may act normally again.`);
+        this.renderAll();
+        break;
+      case 'champion-restore':
+        if (!entity.hasChampionBlessing) return;
+        pushHistory();
+        entity.hp = entity.maxHp;
+        entity.mp = entity.maxMp;
+        entity.hasChampionBlessing = false;
+        this.logger.log(`👑 ${entity.name} receives the Champion's Blessing — full HP/MP restored!`);
+        this.renderAll();
+        break;
+    }
+  }
+
   bindCardsRow() {
     const row = document.getElementById('cardsRow');
 
@@ -145,29 +198,10 @@ export class App {
 
       switch (t.dataset.action) {
         case 'potion':
-          if (!entity.hasPotion) return;
-          pushHistory();
-          entity.hp = Math.min(entity.hp + 50, entity.maxHp);
-          entity.hasPotion = false;
-          this.logger.log(`${entity.name} drinks a Potion (+50 HP).`);
-          this.renderAll();
-          break;
         case 'elixir':
-          if (!entity.hasElixir) return;
-          pushHistory();
-          entity.mp = Math.min(entity.mp + 40, entity.maxMp);
-          entity.hasElixir = false;
-          this.logger.log(`${entity.name} drinks a Mana Elixir (+40 MP).`);
-          this.renderAll();
-          break;
+        case 'clear-turn-lock':
         case 'champion-restore':
-          if (!entity.hasChampionBlessing) return;
-          pushHistory();
-          entity.hp = entity.maxHp;
-          entity.mp = entity.maxMp;
-          entity.hasChampionBlessing = false;
-          this.logger.log(`👑 ${entity.name} receives the Champion's Blessing — full HP/MP restored!`);
-          this.renderAll();
+          this.handleCardAction(t.dataset.action, entity);
           break;
         case 'toggle-counter': {
           pushHistory();
@@ -206,8 +240,21 @@ export class App {
 
   bindStatusStrip() {
     document.getElementById('statusStrip').addEventListener('click', (e) => {
+      const actionBtn = e.target.closest('[data-action="potion"], [data-action="elixir"], [data-action="clear-turn-lock"]');
+      if (actionBtn) {
+        const entity = this.state.getEntity(actionBtn.dataset.id);
+        if (entity) this.handleCardAction(actionBtn.dataset.action, entity);
+        return;
+      }
       if (!e.target.closest('[data-action="strip-jump"]')) return;
       this.tabNav.switchTo('fighters');
+    });
+  }
+
+  bindPendingBanner() {
+    document.getElementById('pendingBanner').addEventListener('click', (e) => {
+      if (!e.target.closest('[data-action="goto-combat"]')) return;
+      this.tabNav.switchTo('combat');
     });
   }
 
@@ -248,6 +295,15 @@ export class App {
       this.renderAll();
     });
 
+    document.querySelectorAll('#statusRollDice .dice-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const roll = parseInt(btn.dataset.roll, 10);
+        this.state.pushHistory(this.logger.getHtml());
+        this.combatEngine.resolveStatusRoll(roll);
+        this.renderAll();
+      });
+    });
+
     document.getElementById('undoBtn').addEventListener('click', () => this.undo());
   }
 
@@ -281,8 +337,8 @@ export class App {
 
     document.getElementById('round2HealBtn').addEventListener('click', () => {
       this.state.pushHistory(this.logger.getHtml());
-      this.state.players.forEach(p => { p.hp = Math.min(p.hp + 10, p.maxHp); });
-      this.logger.log('🌿 Round 2 modifier: all players heal +10 HP.');
+      this.state.fullRestoreRound2();
+      this.logger.log('🌿 Round 2 modifier: FULL RESTORE — all players back to Max HP/MP, Potions and Counters renewed.');
       this.renderAll();
     });
 
@@ -307,17 +363,6 @@ export class App {
         }
         this.renderAll();
       });
-    });
-
-    document.getElementById('bossRouteBtn').addEventListener('click', () => {
-      if (this.state.bossRouteTriggered) return;
-      if (!this.state.players.every(p => p.hp <= 0)) return;
-      this.state.pushHistory(this.logger.getHtml());
-      this.state.players.forEach(p => { p.hp = p.maxHp; p.mp = p.maxMp; p.forfeited = false; });
-      this.state.boss.enterBossRoute();
-      this.state.bossRouteTriggered = true;
-      this.logger.log("⚡ Alternate Boss Route triggered! All players revived to full HP/MP — Boss Dragon's stats are doubled (800 HP) for the 4v1 showdown.");
-      this.renderAll();
     });
   }
 
@@ -364,7 +409,8 @@ export class App {
         this.state.selectedAttacker = champId;
         this.state.selectedDefender = 'boss';
         this.state.selectedSkill = null;
-        this.logger.log(`🐉 ${champion.name} steps forward to face the Boss Dragon!`);
+        this.state.championDuelActive = true;
+        this.logger.log(`🐉 ${champion.name} steps forward to face the Boss Dragon! Combat is now locked to this final duel.`);
         this.renderAll();
         this.tabNav.switchTo('combat');
       }

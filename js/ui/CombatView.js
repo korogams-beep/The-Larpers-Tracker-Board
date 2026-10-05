@@ -1,35 +1,47 @@
 // CombatView renders the Attacker/Defender selects, the attacker's skill
-// buttons (with MP-affordability and Last-Ditch/Hesitation gating reflected
-// visually), the counter info line, and the Undo button state.
+// buttons (with MP-affordability, Turn-Lock, Stun, and Last-Ditch/Hesitation
+// gating reflected visually), the counter info line, the pending status-roll
+// prompt, and the Undo button state.
 
-import { CLASS_DATA, BOSS_DATA, SKILL_LABEL } from '../data/gameData.js';
+import { CLASS_DATA, BOSS_DATA, SKILL_LABEL, STATUS_EFFECTS } from '../data/gameData.js';
 import { escapeHtml } from '../utils/helpers.js';
 import { CombatEngine } from '../engine/CombatEngine.js';
 
 export class CombatView {
-  constructor({ attackerSelect, defenderSelect, skillsWrap, counterSelect, counterInfo, undoBtn }) {
+  constructor({ attackerSelect, defenderSelect, skillsWrap, counterSelect, counterInfo, undoBtn, executeBtn, statusRollPrompt, statusRollLabel }) {
     this.attackerSelect = attackerSelect;
     this.defenderSelect = defenderSelect;
     this.skillsWrap = skillsWrap;
     this.counterSelect = counterSelect;
     this.counterInfo = counterInfo;
     this.undoBtn = undoBtn;
+    this.executeBtn = executeBtn;
+    this.statusRollPrompt = statusRollPrompt;
+    this.statusRollLabel = statusRollLabel;
   }
 
   render(state) {
     this.renderSelects(state);
     this.renderSkills(state);
     this.renderCounterInfo(state);
+    this.renderStatusRollPrompt(state);
   }
 
   renderSelects(state) {
-    const optionsHtml = state.entities
+    // Once the Champion has been sent to fight the Boss Dragon, narrow the
+    // pickers to just those two combatants — no accidental picking of an
+    // eliminated player for the final duel.
+    const pool = (state.championDuelActive && state.bracket.champion)
+      ? state.entities.filter(e => e.id === state.bracket.champion || e.id === 'boss')
+      : state.entities;
+
+    const optionsHtml = pool
       .map(e => `<option value="${e.id}">${escapeHtml(e.name)} (${e.class})${e.hp <= 0 ? ' [DOWNED]' : ''}</option>`)
       .join('');
     this.attackerSelect.innerHTML = optionsHtml;
     this.defenderSelect.innerHTML = optionsHtml;
-    if (!state.getEntity(state.selectedAttacker)) state.selectedAttacker = state.entities[0].id;
-    if (!state.getEntity(state.selectedDefender)) state.selectedDefender = state.entities[1].id;
+    if (!pool.some(e => e.id === state.selectedAttacker)) state.selectedAttacker = pool[0].id;
+    if (!pool.some(e => e.id === state.selectedDefender)) state.selectedDefender = pool[pool.length > 1 ? 1 : 0].id;
     this.attackerSelect.value = state.selectedAttacker;
     this.defenderSelect.value = state.selectedDefender;
   }
@@ -44,9 +56,27 @@ export class CombatView {
       return;
     }
 
+    if (attacker.turnLocked) {
+      this.skillsWrap.innerHTML = `<div class="last-ditch-note">⏳ ${attacker.name} used a Potion/Elixir — their entire turn is consumed. Tap "Clear Turn Lock" on their card once their next turn begins.</div>`;
+      state.selectedSkill = null;
+      return;
+    }
+
+    if (attacker.hp <= 0 && !state.championDuelActive) {
+      this.skillsWrap.innerHTML = `<div class="last-ditch-note">🚫 ${attacker.name} is downed and out of the fight. Last Ditch Effort only applies in the Champion vs Boss Dragon duel.</div>`;
+      state.selectedSkill = null;
+      return;
+    }
+
+    if (attacker.statusStun) {
+      this.skillsWrap.innerHTML = `<div class="last-ditch-note">💫 ${attacker.name} is Stunned — press EXECUTE TURN to resolve their skipped turn.</div>`;
+      state.selectedSkill = null;
+      return;
+    }
+
     const cd = attacker.getClassData();
     const enraged = attacker.type === 'boss' && attacker.hp > 0 && attacker.hp <= BOSS_DATA.passiveThreshold;
-    const isLastDitch = attacker.hp <= 0;
+    const isLastDitch = attacker.hp <= 0 && state.championDuelActive;
     const bonus = (state.round1Active ? 10 : 0) + (attacker.atkBuff || 0) + (enraged ? BOSS_DATA.passiveBonus : 0);
 
     if (attacker.forcedBasic && !isLastDitch) {
@@ -71,7 +101,7 @@ export class CombatView {
       const selected = (state.selectedSkill === key && !disabled) ? 'selected' : '';
       let note = '';
       if (!isLastDitch && !canAffordMp) note = ' · Not enough MP';
-      if (s.stun) note += ' · Stun';
+      if (s.status) note += ` · ${STATUS_EFFECTS[s.status].label}`;
       return `<button class="skill-btn ${selected}" data-action="select-skill" data-skill="${key}" ${disabled ? 'disabled' : ''}>
                 <span class="sk-name">${SKILL_LABEL[key]}</span>
                 <span class="sk-stats">${mpLabel} · ${dmg} DMG${enraged ? ' 🔥' : ''}${note}</span>
@@ -112,6 +142,20 @@ export class CombatView {
     desc += `. Remaining: ${remaining}/${defender.maxCounters}.`;
     if (remaining > 0 && !mpOk) desc += ' Not enough MP to counter!';
     this.counterInfo.textContent = desc;
+  }
+
+  renderStatusRollPrompt(state) {
+    const pending = state.pendingStatusRoll;
+    if (!pending) {
+      this.statusRollPrompt.style.display = 'none';
+      this.executeBtn.disabled = false;
+      return;
+    }
+    const target = state.getEntity(pending.targetId);
+    const info = STATUS_EFFECTS[pending.effect];
+    this.statusRollLabel.textContent = `Roll 1d6 for ${info.label} on ${target ? target.name : '?'} — Odd fails, Even succeeds`;
+    this.statusRollPrompt.style.display = 'block';
+    this.executeBtn.disabled = true;
   }
 
   updateUndoButton(historyLength) {

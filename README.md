@@ -28,7 +28,20 @@ js/
 ```
 
 `GameState` and the two engines have no DOM references at all, so the rules
-can be unit-tested in plain Node (see below) without a browser.
+can be unit-tested in plain Node without a browser.
+
+## Running Tests
+
+Run the complete test suite (54 automated tests across 7 suites covering all kits, defense rules, status rolls, penalties, modifiers, situational mixes, and tournament simulations):
+
+```bash
+node tests/run_all.js
+# or
+npm test
+```
+
+See [Test-Result.md](file:///c:/Users/Gams/The-Larpers-Tracker-Board/Test-Result.md) for full test results, matrices, and situational analysis.
+See [Issues.md](file:///c:/Users/Gams/The-Larpers-Tracker-Board/Issues.md) for identified rule edge cases, mobile UX risks, and planned fixes.
 
 ## Run locally
 

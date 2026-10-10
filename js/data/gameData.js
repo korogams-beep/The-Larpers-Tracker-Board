@@ -46,9 +46,7 @@ export const BOSS_DATA = {
     basic: { mp: 0, dmg: 40 },
     primary: { mp: -35, dmg: 30, status: 'stun' },
     ultimate: { mp: -50, dmg: 80, status: 'burn' }
-  },
-  passiveThreshold: 200,
-  passiveBonus: 10
+  }
 };
 
 // Status effects: a skill tagged with `status` gives the Game Master a

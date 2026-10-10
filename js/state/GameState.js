@@ -205,4 +205,51 @@ export class GameState {
     }
     return { title: 'No bracket yet', modifier: 'Tap "Randomize Bracket" to begin' };
   }
+
+  /**
+   * Prepares the crowned Champion for the final duel against the Boss Dragon:
+   * Full HP/MP restored, Potions & Counters renewed, statuses cleared, Round 1
+   * modifier cleared, duel locked.
+   */
+  prepareChampionForBossDuel(champId) {
+    const champion = this.getEntity(champId);
+    if (!champion) return;
+    champion.hp = champion.maxHp;
+    champion.mp = champion.maxMp;
+    champion.hasPotion = true;
+    champion.hasElixir = true;
+    champion.countersChecked = Array(champion.maxCounters).fill(false);
+    champion.turnLocked = false;
+    champion.statusStun = false;
+    champion.statusShatter = false;
+    champion.statusBlind = false;
+    champion.statusBurn = false;
+    champion.lastDitchUsed = false;
+    this.round1Active = false;
+    this.championDuelActive = true;
+    this.selectedAttacker = champId;
+    this.selectedDefender = 'boss';
+    this.selectedSkill = null;
+    this.selectedCounterOpt = 'none';
+  }
+
+  saveToStorage() {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem('larpers_state_v1', JSON.stringify(this.snapshot()));
+    } catch (_) {}
+  }
+
+  loadFromStorage() {
+    if (typeof localStorage === 'undefined') return false;
+    try {
+      const data = localStorage.getItem('larpers_state_v1');
+      if (!data) return false;
+      const parsed = JSON.parse(data);
+      this.restore(parsed);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }

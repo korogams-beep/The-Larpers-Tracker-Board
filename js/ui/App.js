@@ -80,6 +80,9 @@ export class App {
 
   init() {
     this.bindEvents();
+    if (this.state.loadFromStorage()) {
+      this.logger.log('Restored tournament state from previous session.');
+    }
     this.renderAll();
     this.positionLogBar();
     window.addEventListener('resize', () => this.positionLogBar());
@@ -105,6 +108,7 @@ export class App {
     this.bracketView.render(this.state);
     this.tabNav.updateBadges(this.state);
     this.combatView.updateUndoButton(this.state.historyStack.length);
+    this.state.saveToStorage();
   }
 
   undo() {
@@ -126,6 +130,10 @@ export class App {
     this.bindResetButton();
     document.getElementById('fabExecute').addEventListener('click', () => {
       this.tabNav.switchTo('combat');
+      if (this.state.pendingStatusRoll) {
+        this.logger.log('🎲 Please resolve the pending 1d6 status roll first.');
+        return;
+      }
       this.combatEngine.execute();
       this.renderAll();
     });
@@ -142,6 +150,10 @@ export class App {
   /** Shared by the Fighters-tab cards and the top status-strip quick-action
    *  buttons, so a Potion/Elixir/Clear can be tapped from either place. */
   handleCardAction(action, entity) {
+    if (entity.hp <= 0 || entity.forfeited) {
+      this.logger.log(`${entity.name} is downed/forfeited and cannot consume potions or blessings.`);
+      return;
+    }
     const pushHistory = () => this.state.pushHistory(this.logger.getHtml());
 
     switch (action) {
@@ -228,10 +240,22 @@ export class App {
       const t = e.target;
       if (t.dataset.action === 'rename') {
         const entity = this.state.getEntity(t.dataset.id);
-        entity.name = t.value.trim() || entity.name;
-        this.renderAll();
+        const newName = t.value.trim() || entity.name;
+        if (newName !== entity.name) {
+          this.state.pushHistory(this.logger.getHtml());
+          entity.name = newName;
+          this.renderAll();
+        }
       } else if (t.dataset.action === 'change-class') {
         const entity = this.state.getEntity(t.dataset.id);
+        const isStarted = entity.hp < entity.maxHp || entity.mp < entity.maxMp || entity.countersChecked.some(Boolean);
+        if (isStarted && typeof confirm === 'function') {
+          if (!confirm(`Switching class will reset ${entity.name}'s stats and counters to base. Continue?`)) {
+            t.value = entity.class;
+            return;
+          }
+        }
+        this.state.pushHistory(this.logger.getHtml());
         entity.applyClass(t.value);
         this.renderAll();
       }
@@ -406,11 +430,9 @@ export class App {
         const champId = this.state.bracket.champion;
         const champion = this.state.getEntity(champId);
         if (!champion) return;
-        this.state.selectedAttacker = champId;
-        this.state.selectedDefender = 'boss';
-        this.state.selectedSkill = null;
-        this.state.championDuelActive = true;
-        this.logger.log(`🐉 ${champion.name} steps forward to face the Boss Dragon! Combat is now locked to this final duel.`);
+        this.state.pushHistory(this.logger.getHtml());
+        this.state.prepareChampionForBossDuel(champId);
+        this.logger.log(`🐉 ${champion.name} steps forward to face the Boss Dragon with full HP/MP restored, Potions & Counters renewed! Combat is now locked to this final duel.`);
         this.renderAll();
         this.tabNav.switchTo('combat');
       }

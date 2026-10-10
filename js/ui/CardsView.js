@@ -16,7 +16,6 @@ export class CardsView {
   cardHtml(e, state) {
     const remaining = e.maxCounters - e.countersChecked.filter(Boolean).length;
     const isBoss = e.type === 'boss';
-    const enraged = isBoss && e.hp > 0 && e.hp <= 200;
     const downed = e.hp <= 0;
     const hpP = pct(e.hp, e.maxHp);
     const isAtk = e.id === state.selectedAttacker;
@@ -39,14 +38,13 @@ export class CardsView {
 
     const consumablesHtml = isBoss ? '' : `
       <div class="consumables-row">
-        <button class="btn-consumable potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || e.turnLocked) ? 'disabled' : ''}>${e.hasPotion ? '+50 HP' : 'Potion Used'}</button>
-        <button class="btn-consumable elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || e.turnLocked) ? 'disabled' : ''}>${e.hasElixir ? '+40 MP' : 'Elixir Used'}</button>
+        <button class="btn-consumable potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || e.turnLocked || downed || e.forfeited) ? 'disabled' : ''}>${e.hasPotion ? '+50 HP' : 'Potion Used'}</button>
+        <button class="btn-consumable elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || e.turnLocked || downed || e.forfeited) ? 'disabled' : ''}>${e.hasElixir ? '+40 MP' : 'Elixir Used'}</button>
       </div>
-      <button class="btn-consumable champion-btn" data-action="champion-restore" data-id="${e.id}" ${!e.hasChampionBlessing ? 'disabled' : ''}>${e.hasChampionBlessing ? '👑 Champion Restore' : '👑 Used'}</button>
+      <button class="btn-consumable champion-btn" data-action="champion-restore" data-id="${e.id}" ${(!e.hasChampionBlessing || downed || e.forfeited) ? 'disabled' : ''}>${e.hasChampionBlessing ? '👑 Champion Restore' : '👑 Used'}</button>
       ${e.turnLocked ? `<button class="btn-consumable champion-btn" data-action="clear-turn-lock" data-id="${e.id}">⏳ Clear Turn Lock</button>` : ''}`;
 
     const badges = [];
-    if (enraged) badges.push(`<span class="enrage-badge">ENRAGED +10 DMG</span>`);
     if (e.atkBuff > 0) badges.push(`<span class="buff-badge">+${e.atkBuff} ATK</span>`);
     if (e.forfeited) badges.push(`<span class="defeated-badge">FORFEITED</span>`);
     else if (downed && state.championDuelActive) badges.push(`<span class="defeated-badge">DOWNED — LAST DITCH</span>`);

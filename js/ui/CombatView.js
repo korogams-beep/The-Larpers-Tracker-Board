@@ -75,9 +75,8 @@ export class CombatView {
     }
 
     const cd = attacker.getClassData();
-    const enraged = attacker.type === 'boss' && attacker.hp > 0 && attacker.hp <= BOSS_DATA.passiveThreshold;
-    const isLastDitch = attacker.hp <= 0 && state.championDuelActive;
-    const bonus = (state.round1Active ? 10 : 0) + (attacker.atkBuff || 0) + (enraged ? BOSS_DATA.passiveBonus : 0);
+    const isRound1PlayerMatch = state.round1Active && attacker.type !== 'boss' && !state.championDuelActive;
+    const bonus = (isRound1PlayerMatch ? 10 : 0) + (attacker.atkBuff || 0);
 
     if (attacker.forcedBasic && !isLastDitch) {
       const s = cd.skills.basic;
@@ -104,7 +103,7 @@ export class CombatView {
       if (s.status) note += ` · ${STATUS_EFFECTS[s.status].label}`;
       return `<button class="skill-btn ${selected}" data-action="select-skill" data-skill="${key}" ${disabled ? 'disabled' : ''}>
                 <span class="sk-name">${SKILL_LABEL[key]}</span>
-                <span class="sk-stats">${mpLabel} · ${dmg} DMG${enraged ? ' 🔥' : ''}${note}</span>
+                <span class="sk-stats">${mpLabel} · ${dmg} DMG${note}</span>
               </button>`;
     }).join('');
 

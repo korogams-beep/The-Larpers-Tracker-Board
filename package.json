@@ -1,0 +1,8 @@
+{
+  "name": "the-larpers-tracker-board",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/run_all.js"
+  }
+}

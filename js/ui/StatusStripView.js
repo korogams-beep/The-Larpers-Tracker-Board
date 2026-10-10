@@ -25,8 +25,8 @@ export class StatusStripView {
         const downed = e.hp <= 0;
         const actionsHtml = e.type === 'player' ? `
           <div class="chip-actions">
-            <button class="chip-btn potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || e.turnLocked) ? 'disabled' : ''}>+50 HP</button>
-            <button class="chip-btn elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || e.turnLocked) ? 'disabled' : ''}>+40 MP</button>
+            <button class="chip-btn potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || e.turnLocked || downed || e.forfeited) ? 'disabled' : ''}>+50 HP</button>
+            <button class="chip-btn elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || e.turnLocked || downed || e.forfeited) ? 'disabled' : ''}>+40 MP</button>
           </div>
           ${e.turnLocked ? `<button class="chip-btn clear-lock" data-action="clear-turn-lock" data-id="${e.id}">⏳ Clear Turn</button>` : ''}` : '';
         return `<div class="status-chip role-${role} ${downed ? 'is-down' : ''}">

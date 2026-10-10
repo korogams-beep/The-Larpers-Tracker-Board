@@ -30,6 +30,8 @@ export class CombatEngine {
     if (!attacker || !defender) { this.log('Select an attacker and defender first.'); return; }
     if (attacker.id === defender.id) { this.log('Attacker and defender must be different.'); return; }
     if (attacker.forfeited) { this.log(`${attacker.name} has forfeited and cannot act.`); return; }
+    if (defender.forfeited) { this.log(`${defender.name} has forfeited and cannot be targeted.`); return; }
+    if (defender.hp <= 0) { this.log(`${defender.name} is already downed and cannot be targeted.`); return; }
     if (attacker.turnLocked) {
       this.log(`${attacker.name} already used a Potion/Elixir this turn and cannot attack. Use "Clear Turn Lock" once their next turn begins.`);
       return;
@@ -47,6 +49,15 @@ export class CombatEngine {
     if (attacker.statusStun) {
       this.pushHistory();
       attacker.statusStun = false;
+      if (attacker.forcedBasic) attacker.forcedBasic = false;
+      if (attacker.statusBurn) {
+        attacker.hp = clamp(attacker.hp - 15, 0, attacker.maxHp);
+        attacker.statusBurn = false;
+        this.log(`🔥 ${attacker.name} takes 15 Burn DMG at the start of their turn.`);
+        if (attacker.hp <= 0) {
+          this.log(`💀 ${attacker.name} has succumbed to burn damage!`);
+        }
+      }
       this.log(`💫 ${attacker.name} is Stunned and loses their turn!`);
       this.swapAttackerDefender();
       return;
@@ -83,10 +94,15 @@ export class CombatEngine {
       attacker.hp = clamp(attacker.hp - 15, 0, attacker.maxHp);
       attacker.statusBurn = false;
       this.log(`🔥 ${attacker.name} takes 15 Burn DMG at the start of their turn.`);
+      if (attacker.hp <= 0 && !state.championDuelActive) {
+        this.log(`💀 ${attacker.name} has succumbed to burn damage!`);
+        this.swapAttackerDefender();
+        return;
+      }
     }
 
-    const enraged = attacker.type === 'boss' && attacker.hp > 0 && attacker.hp <= BOSS_DATA.passiveThreshold;
-    const bonus = (state.round1Active ? 10 : 0) + (attacker.atkBuff || 0) + (enraged ? BOSS_DATA.passiveBonus : 0);
+    const isRound1PlayerMatch = state.round1Active && attacker.type !== 'boss' && !state.championDuelActive;
+    const bonus = (isRound1PlayerMatch ? 10 : 0) + (attacker.atkBuff || 0);
     const baseDmg = skill.dmg + bonus;
 
     if (!isForcedBasic) {
@@ -95,6 +111,7 @@ export class CombatEngine {
 
     let finalDmg = baseDmg;
     let extra = '';
+    const prevAttackerHp = attacker.hp;
     const counterOpt = state.selectedCounterOpt;
 
     if (counterOpt === 'dodge') {
@@ -139,7 +156,6 @@ export class CombatEngine {
     }
 
     const prevDefenderHp = defender.hp;
-    const prevAttackerHp = attacker.hp;
     defender.hp = clamp(defender.hp - finalDmg, 0, defender.maxHp);
 
     const defenderJustDied = prevDefenderHp > 0 && defender.hp <= 0;
@@ -181,6 +197,13 @@ export class CombatEngine {
    *  snapshotted the pre-swap pairing, so Undo puts it right back. */
   swapAttackerDefender() {
     const state = this.state;
+    const defender = state.getEntity(state.selectedDefender);
+    const canLastDitch = defender && defender.hp <= 0 && state.championDuelActive && !defender.lastDitchUsed;
+    if (defender && (defender.forfeited || (defender.hp <= 0 && !canLastDitch))) {
+      state.selectedSkill = null;
+      state.selectedCounterOpt = 'none';
+      return;
+    }
     [state.selectedAttacker, state.selectedDefender] = [state.selectedDefender, state.selectedAttacker];
     state.selectedSkill = null;
     state.selectedCounterOpt = 'none';

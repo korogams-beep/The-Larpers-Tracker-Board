@@ -38,11 +38,10 @@ export class CardsView {
 
     const consumablesHtml = isBoss ? '' : `
       <div class="consumables-row">
-        <button class="btn-consumable potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || e.turnLocked || downed || e.forfeited) ? 'disabled' : ''}>${e.hasPotion ? '+50 HP' : 'Potion Used'}</button>
-        <button class="btn-consumable elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || e.turnLocked || downed || e.forfeited) ? 'disabled' : ''}>${e.hasElixir ? '+40 MP' : 'Elixir Used'}</button>
+        <button class="btn-consumable potion" data-action="potion" data-id="${e.id}" ${(!e.hasPotion || downed || e.forfeited) ? 'disabled' : ''}>${e.hasPotion ? '+50 HP' : 'Potion Used'}</button>
+        <button class="btn-consumable elixir" data-action="elixir" data-id="${e.id}" ${(!e.hasElixir || downed || e.forfeited) ? 'disabled' : ''}>${e.hasElixir ? '+40 MP' : 'Elixir Used'}</button>
       </div>
-      <button class="btn-consumable champion-btn" data-action="champion-restore" data-id="${e.id}" ${(!e.hasChampionBlessing || downed || e.forfeited) ? 'disabled' : ''}>${e.hasChampionBlessing ? '👑 Champion Restore' : '👑 Used'}</button>
-      ${e.turnLocked ? `<button class="btn-consumable champion-btn" data-action="clear-turn-lock" data-id="${e.id}">⏳ Clear Turn Lock</button>` : ''}`;
+      <button class="btn-consumable champion-btn" data-action="champion-restore" data-id="${e.id}" ${(!e.hasChampionBlessing || downed || e.forfeited) ? 'disabled' : ''}>${e.hasChampionBlessing ? '👑 Champion Restore' : '👑 Used'}</button>`;
 
     const badges = [];
     if (e.atkBuff > 0) badges.push(`<span class="buff-badge">+${e.atkBuff} ATK</span>`);
@@ -50,7 +49,6 @@ export class CardsView {
     else if (downed && state.championDuelActive) badges.push(`<span class="defeated-badge">DOWNED — LAST DITCH</span>`);
     else if (downed) badges.push(`<span class="defeated-badge">DOWNED</span>`);
     if (e.forcedBasic) badges.push(`<span class="violation-badge">HESITATION</span>`);
-    if (e.turnLocked) badges.push(`<span class="violation-badge">TURN CONSUMED</span>`);
     if (e.statusStun) badges.push(`<span class="status-badge status-stun">${STATUS_EFFECTS.stun.badge}</span>`);
     if (e.statusShatter) badges.push(`<span class="status-badge status-shatter">${STATUS_EFFECTS.shatter.badge}</span>`);
     if (e.statusBlind) badges.push(`<span class="status-badge status-blind">${STATUS_EFFECTS.blind.badge}</span>`);

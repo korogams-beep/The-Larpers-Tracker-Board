@@ -234,22 +234,11 @@ export class GameState {
   }
 
   saveToStorage() {
-    if (typeof localStorage === 'undefined') return;
-    try {
-      localStorage.setItem('larpers_state_v1', JSON.stringify(this.snapshot()));
-    } catch (_) {}
+    // Disabled: game resets upon refresh as requested
   }
 
   loadFromStorage() {
-    if (typeof localStorage === 'undefined') return false;
-    try {
-      const data = localStorage.getItem('larpers_state_v1');
-      if (!data) return false;
-      const parsed = JSON.parse(data);
-      this.restore(parsed);
-      return true;
-    } catch (_) {
-      return false;
-    }
+    // Disabled: game resets upon refresh as requested
+    return false;
   }
 }

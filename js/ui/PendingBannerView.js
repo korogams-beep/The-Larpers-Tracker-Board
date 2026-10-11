@@ -28,17 +28,6 @@ export class PendingBannerView {
       return;
     }
 
-    const locked = state.entities.filter(e => e.turnLocked);
-    if (locked.length > 0) {
-      const names = locked.map(e => escapeHtml(e.name)).join(', ');
-      this.container.innerHTML = `
-        <button class="pending-banner is-lock" data-action="goto-combat">
-          ⏳ Turn consumed: ${names} — clear when their next turn begins
-        </button>`;
-      this.container.style.display = 'block';
-      return;
-    }
-
     this.container.innerHTML = '';
     this.container.style.display = 'none';
   }

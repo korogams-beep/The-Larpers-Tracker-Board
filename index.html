@@ -63,6 +63,16 @@
           <button class="dice-btn" data-roll="6">6 ⚅</button>
         </div>
       </div>
+      <div class="combat-log-card">
+        <div class="log-header-row">
+          <span class="section-title" style="margin:0;">📜 Combat Log</span>
+          <select id="battleSelect" class="std-select select-battle"></select>
+        </div>
+        <div id="currentLogWrap">
+          <div class="combat-log" id="combatLog"></div>
+        </div>
+        <div class="combat-log" id="archivedLog" style="display:none;"></div>
+      </div>
     </section>
 
     <section id="tab-moderator" class="tab-panel">
@@ -115,24 +125,6 @@
       <div id="bracketContainer"></div>
     </section>
   </main>
-
-  <div class="log-bar" id="logBar">
-    <div class="log-bar-body" id="logBarBody">
-      <div class="field-label">Viewing</div>
-      <select id="battleSelect" class="std-select"></select>
-      <div id="currentLogWrap">
-        <div class="combat-log" id="combatLog"></div>
-      </div>
-      <div class="combat-log" id="archivedLog" style="display:none;"></div>
-    </div>
-    <button class="log-bar-header" id="logBarToggle">
-      <span class="log-bar-title">📜 Log</span>
-      <span class="log-bar-latest" id="logBarLatest">No actions yet.</span>
-      <span class="log-bar-chevron">▲</span>
-    </button>
-  </div>
-
-  <button id="fabExecute" class="fab-execute" title="Execute Turn">⚔</button>
 
   <nav class="tab-bar">
     <button class="tab-btn active" data-tab="fighters"><span class="tab-icon">🛡</span>Fighters</button>

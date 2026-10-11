@@ -56,12 +56,6 @@ export class CombatView {
       return;
     }
 
-    if (attacker.turnLocked) {
-      this.skillsWrap.innerHTML = `<div class="last-ditch-note">⏳ ${attacker.name} used a Potion/Elixir — their entire turn is consumed. Tap "Clear Turn Lock" on their card once their next turn begins.</div>`;
-      state.selectedSkill = null;
-      return;
-    }
-
     if (attacker.hp <= 0 && !state.championDuelActive) {
       this.skillsWrap.innerHTML = `<div class="last-ditch-note">🚫 ${attacker.name} is downed and out of the fight. Last Ditch Effort only applies in the Champion vs Boss Dragon duel.</div>`;
       state.selectedSkill = null;
@@ -77,6 +71,7 @@ export class CombatView {
     const cd = attacker.getClassData();
     const isRound1PlayerMatch = state.round1Active && attacker.type !== 'boss' && !state.championDuelActive;
     const bonus = (isRound1PlayerMatch ? 10 : 0) + (attacker.atkBuff || 0);
+    const isLastDitch = attacker.hp <= 0 && state.championDuelActive;
 
     if (attacker.forcedBasic && !isLastDitch) {
       const s = cd.skills.basic;

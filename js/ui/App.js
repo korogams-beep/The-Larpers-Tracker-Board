@@ -22,7 +22,7 @@ export class App {
   constructor() {
     this.state = new GameState();
 
-    this.logger = new Logger(document.getElementById('combatLog'), document.getElementById('logBarLatest'));
+    this.logger = new Logger(document.getElementById('combatLog'));
 
     const pushHistory = () => this.state.pushHistory(this.logger.getHtml());
     const log = (text) => this.logger.log(text);
@@ -69,10 +69,6 @@ export class App {
 
     this.bracketView = new BracketView(document.getElementById('bracketContainer'));
 
-    this.logBar = document.getElementById('logBar');
-    this.logBarToggle = document.getElementById('logBarToggle');
-    this.fabExecute = document.getElementById('fabExecute');
-
     this.resetBtn = document.getElementById('resetBtn');
     this.resetArmed = false;
     this.resetTimer = null;
@@ -80,21 +76,10 @@ export class App {
 
   init() {
     this.bindEvents();
-    if (this.state.loadFromStorage()) {
-      this.logger.log('Restored tournament state from previous session.');
+    if (typeof localStorage !== 'undefined') {
+      try { localStorage.removeItem('larpers_state_v1'); } catch (_) {}
     }
     this.renderAll();
-    this.positionLogBar();
-    window.addEventListener('resize', () => this.positionLogBar());
-  }
-
-  /** Keeps the persistent log bar (and the FAB above it) pinned correctly
-   *  above the tab bar, measured live so it works across devices/safe-areas. */
-  positionLogBar() {
-    const tabBarH = document.querySelector('.tab-bar').offsetHeight;
-    this.logBar.style.bottom = tabBarH + 'px';
-    const headerH = this.logBarToggle.offsetHeight;
-    this.fabExecute.style.bottom = (tabBarH + headerH + 12) + 'px';
   }
 
   renderAll() {
@@ -108,7 +93,6 @@ export class App {
     this.bracketView.render(this.state);
     this.tabNav.updateBadges(this.state);
     this.combatView.updateUndoButton(this.state.historyStack.length);
-    this.state.saveToStorage();
   }
 
   undo() {
@@ -128,19 +112,6 @@ export class App {
     this.bindArenaTab();
     this.bindBracketTab();
     this.bindResetButton();
-    document.getElementById('fabExecute').addEventListener('click', () => {
-      this.tabNav.switchTo('combat');
-      if (this.state.pendingStatusRoll) {
-        this.logger.log('🎲 Please resolve the pending 1d6 status roll first.');
-        return;
-      }
-      this.combatEngine.execute();
-      this.renderAll();
-    });
-    this.logBarToggle.addEventListener('click', () => {
-      this.logBar.classList.toggle('expanded');
-      this.fabExecute.classList.toggle('log-open', this.logBar.classList.contains('expanded'));
-    });
     document.getElementById('battleSelect').addEventListener('change', (e) => {
       this.historyView.setViewing(e.target.value);
       this.historyView.render(this.state);
@@ -148,7 +119,7 @@ export class App {
   }
 
   /** Shared by the Fighters-tab cards and the top status-strip quick-action
-   *  buttons, so a Potion/Elixir/Clear can be tapped from either place. */
+   *  buttons, so a Potion/Elixir can be tapped from either place. */
   handleCardAction(action, entity) {
     if (entity.hp <= 0 || entity.forfeited) {
       this.logger.log(`${entity.name} is downed/forfeited and cannot consume potions or blessings.`);
@@ -159,31 +130,28 @@ export class App {
     switch (action) {
       case 'potion':
         if (!entity.hasPotion) return;
-        // A fighter whose turn is already consumed (by this Potion, an
-        // Elixir, or anything else) cannot also drink a second consumable
-        // on the same turn — each one eats its own turn individually.
-        if (entity.turnLocked) { this.logger.log(`${entity.name}'s turn is already consumed this turn — cannot also drink a Potion.`); return; }
         pushHistory();
         entity.hp = Math.min(entity.hp + 50, entity.maxHp);
         entity.hasPotion = false;
-        entity.turnLocked = true;
-        this.logger.log(`${entity.name} drinks a Potion (+50 HP) — turn consumed, no attack this turn.`);
+        if (this.state.selectedAttacker === entity.id) {
+          this.combatEngine.swapAttackerDefender();
+          this.logger.log(`🧪 ${entity.name} drinks a Potion (+50 HP) — turn consumed, switched Attacker and Defender.`);
+        } else {
+          this.logger.log(`🧪 ${entity.name} drinks a Potion (+50 HP).`);
+        }
         this.renderAll();
         break;
       case 'elixir':
         if (!entity.hasElixir) return;
-        if (entity.turnLocked) { this.logger.log(`${entity.name}'s turn is already consumed this turn — cannot also drink an Elixir.`); return; }
         pushHistory();
         entity.mp = Math.min(entity.mp + 40, entity.maxMp);
         entity.hasElixir = false;
-        entity.turnLocked = true;
-        this.logger.log(`${entity.name} drinks a Mana Elixir (+40 MP) — turn consumed, no attack this turn.`);
-        this.renderAll();
-        break;
-      case 'clear-turn-lock':
-        pushHistory();
-        entity.turnLocked = false;
-        this.logger.log(`${entity.name}'s next turn begins — they may act normally again.`);
+        if (this.state.selectedAttacker === entity.id) {
+          this.combatEngine.swapAttackerDefender();
+          this.logger.log(`💧 ${entity.name} drinks a Mana Elixir (+40 MP) — turn consumed, switched Attacker and Defender.`);
+        } else {
+          this.logger.log(`💧 ${entity.name} drinks a Mana Elixir (+40 MP).`);
+        }
         this.renderAll();
         break;
       case 'champion-restore':
@@ -211,7 +179,6 @@ export class App {
       switch (t.dataset.action) {
         case 'potion':
         case 'elixir':
-        case 'clear-turn-lock':
         case 'champion-restore':
           this.handleCardAction(t.dataset.action, entity);
           break;
@@ -264,7 +231,7 @@ export class App {
 
   bindStatusStrip() {
     document.getElementById('statusStrip').addEventListener('click', (e) => {
-      const actionBtn = e.target.closest('[data-action="potion"], [data-action="elixir"], [data-action="clear-turn-lock"]');
+      const actionBtn = e.target.closest('[data-action="potion"], [data-action="elixir"]');
       if (actionBtn) {
         const entity = this.state.getEntity(actionBtn.dataset.id);
         if (entity) this.handleCardAction(actionBtn.dataset.action, entity);
@@ -392,27 +359,8 @@ export class App {
 
   bindBracketTab() {
     const randomizeBtn = document.getElementById('randomizeBracketBtn');
-    let armed = false;
-    let armTimer = null;
 
     randomizeBtn.addEventListener('click', () => {
-      if (!armed) {
-        armed = true;
-        randomizeBtn.textContent = 'Tap to Confirm';
-        randomizeBtn.classList.add('armed');
-        clearTimeout(armTimer);
-        armTimer = setTimeout(() => {
-          armed = false;
-          randomizeBtn.textContent = '🔀 Randomize Bracket';
-          randomizeBtn.classList.remove('armed');
-        }, RESET_ARM_TIMEOUT_MS);
-        return;
-      }
-      armed = false;
-      clearTimeout(armTimer);
-      randomizeBtn.textContent = '🔀 Randomize Bracket';
-      randomizeBtn.classList.remove('armed');
-
       this.state.generateBracket();
       this.renderAll();
     });

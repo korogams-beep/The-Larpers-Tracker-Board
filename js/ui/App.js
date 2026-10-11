@@ -22,7 +22,7 @@ export class App {
   constructor() {
     this.state = new GameState();
 
-    this.logger = new Logger(document.getElementById('combatLog'));
+    this.logger = new Logger(document.getElementById('combatLog'), document.getElementById('logBarLatest'));
 
     const pushHistory = () => this.state.pushHistory(this.logger.getHtml());
     const log = (text) => this.logger.log(text);
@@ -69,6 +69,9 @@ export class App {
 
     this.bracketView = new BracketView(document.getElementById('bracketContainer'));
 
+    this.logBar = document.getElementById('logBar');
+    this.logBarToggle = document.getElementById('logBarToggle');
+
     this.resetBtn = document.getElementById('resetBtn');
     this.resetArmed = false;
     this.resetTimer = null;
@@ -112,6 +115,9 @@ export class App {
     this.bindArenaTab();
     this.bindBracketTab();
     this.bindResetButton();
+    this.logBarToggle.addEventListener('click', () => {
+      this.logBar.classList.toggle('expanded');
+    });
     document.getElementById('battleSelect').addEventListener('change', (e) => {
       this.historyView.setViewing(e.target.value);
       this.historyView.render(this.state);
